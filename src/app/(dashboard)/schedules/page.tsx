@@ -141,18 +141,6 @@ export default function SchedulesPage() {
                 </div>
             </div>
 
-            {/* DEBUG: Dump Data to verify structure */}
-            <div className="bg-slate-100 p-4 rounded text-xs font-mono max-h-40 overflow-auto border border-red-500 mb-2">
-                <p className="font-bold text-red-500">DEBUG DATA DUMP (Schedules BFF):</p>
-                <p>IsLoading: {isLoading ? 'true' : 'false'}</p>
-                <p className="text-red-500 font-bold">IsError: {isBffError ? 'YES' : 'No'}</p>
-                {/* @ts-ignore */}
-                <p>Error Msg: {bffError?.message || JSON.stringify(bffError)}</p>
-                <p>Clinics Count: {clinics.length}</p>
-                <p>Schedules Count: {rawSchedules.length}</p>
-                {/* <pre>{JSON.stringify(mergedData, null, 2)}</pre> */}
-            </div>
-
             {/* Main Table Container - Flex Grow to fill space */}
             <div className="flex-1 border rounded-md bg-white shadow-sm overflow-hidden flex flex-col">
                 <div className="overflow-auto flex-1">
