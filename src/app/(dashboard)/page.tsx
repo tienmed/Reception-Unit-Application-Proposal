@@ -22,26 +22,20 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function DashboardPage() {
     const today = format(new Date(), 'yyyy-MM-dd');
 
-    // Fetch daily schedules to count doctors working today
-    const { data: dailyData, isLoading: isLoadingSchedules } = useQuery({
-        queryKey: ['schedules', 'daily', today],
-        queryFn: () => scheduleService.getDailySchedules(today),
+    // Fetch Merged Daily Data (BFF with same start/end date)
+    const { data: mergedData, isLoading } = useQuery({
+        queryKey: ['schedules', 'bff-daily', today],
+        queryFn: () => scheduleService.getMergedWeeklySchedule(today, today),
     });
 
-    // Fetch active clinics
-    const { data: clinicsData, isLoading: isLoadingClinics } = useQuery({
-        queryKey: ['clinics'],
-        queryFn: () => clinicService.getClinics({ is_active: true }),
-    });
+    const clinics = mergedData?.data?.clinics || [];
+    const schedules = mergedData?.data?.schedules || [];
 
-    const activeClinicsCount = clinicsData?.data?.length || 0;
-    const schedulesTodayCount = dailyData?.data?.total || 0;
+    const activeClinicsCount = clinics.length;
+    const schedulesTodayCount = schedules.length;
 
     // Count unique doctors working today
-    const uniqueDoctors = new Set(dailyData?.data?.schedules.map((s) => s.user_id)).size || 0;
-
-    const schedules = dailyData?.data?.schedules || [];
-    const clinics = clinicsData?.data || [];
+    const uniqueDoctors = new Set(schedules.map((s) => s.user_id)).size || 0;
 
     // Helper to find doctor for a clinic and slot
     const getDoctorForSlot = (clinicId: number, slot: 'morning' | 'afternoon') => {
@@ -49,7 +43,7 @@ export default function DashboardPage() {
         return schedule ? schedule.user : null;
     };
 
-    const isLoading = isLoadingSchedules || isLoadingClinics;
+
 
     return (
         <div className="space-y-6">
