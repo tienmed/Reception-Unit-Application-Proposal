@@ -55,7 +55,15 @@ export default function SchedulesPage() {
     // Fetch Clinics
     const { data: clinicsData, isLoading: isLoadingClinics } = useQuery({
         queryKey: ['clinics'],
-        queryFn: () => clinicService.getClinics({ is_active: true }),
+        queryFn: async () => {
+            const res = await clinicService.getClinics({ is_active: true, per_page: 100 });
+            // Filter client-side for "Phòng khám" (exclude Admin/Functional)
+            // IDs: 2, 3, 5, 6 seem to be clinical. 1 is Admin, 7 is Functional.
+            if (res.data) {
+                res.data = res.data.filter(c => [2, 3, 5, 6].includes(c.category_id || 0));
+            }
+            return res;
+        }
     });
 
     // Client-side grouping of schedules

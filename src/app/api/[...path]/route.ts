@@ -104,12 +104,26 @@ async function proxyRequest(request: NextRequest, path: string[]) {
 
     } catch (error: any) {
         console.error('[PROXY] Error:', error);
-        // Safe error object for JSON (avoid circular structure crashes)
+
+        let status = 500;
+        let message = 'Proxy Error';
+
+        if (error.name === 'AbortError') {
+            status = 504; // Gateway Timeout
+            message = 'Upstream API Timed Out (Vercel Proxy Limit)';
+        } else if (error.code === 'ECONNREFUSED') {
+            status = 502; // Bad Gateway
+            message = 'Connection Refused';
+        } else if (error.code === 'ENOTFOUND') {
+            status = 502;
+            message = 'DNS Lookup Failed';
+        }
+
         const safeError = {
-            message: error.message || 'Unknown Error',
+            message: error.message || message,
             code: error.code || 'UNKNOWN',
             name: error.name || 'Error'
         };
-        return NextResponse.json({ success: false, message: 'Proxy Error', error: safeError }, { status: 500 });
+        return NextResponse.json({ success: false, message: message, error: safeError }, { status });
     }
 }
