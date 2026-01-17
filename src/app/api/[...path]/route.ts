@@ -5,6 +5,15 @@ import { promisify } from 'util';
 const API_HOSTNAME = 'phongkhamdaihocypnt.edu.vn';
 const API_BASE_PATH = '/nhansu/api';
 
+// Force IPv4 first if supported (Node 17+) to avoid Vercel IPv6 timeouts
+if (dns.setDefaultResultOrder) {
+    try {
+        dns.setDefaultResultOrder('ipv4first');
+    } catch (e) {
+        // Ignore if already set or not supported
+    }
+}
+
 export async function GET(request: NextRequest, props: { params: Promise<{ path: string[] }> }) {
     const params = await props.params;
     return proxyRequest(request, params.path);
@@ -25,24 +34,11 @@ export async function DELETE(request: NextRequest, props: { params: Promise<{ pa
     return proxyRequest(request, params.path);
 }
 
-async function resolveHostname(hostname: string): Promise<string> {
-    try {
-        const lookup = promisify(dns.lookup);
-        const { address } = await lookup(hostname, { family: 4 });
-        console.log(`[DNS] Resolved ${hostname} to ${address}`);
-        return address;
-    } catch (error) {
-        console.error(`[DNS] Resolution failed for ${hostname}:`, error);
-        return hostname; // Fallback to hostname
-    }
-}
-
 async function proxyRequest(request: NextRequest, path: string[]) {
     const pathStr = path.join('/');
-
-    // Resolve Hostname to IP to force IPv4
-    const resolvedIp = await resolveHostname(API_HOSTNAME);
-    const url = `https://${resolvedIp}${API_BASE_PATH}/${pathStr}${request.nextUrl.search}`;
+    // Use Hostname directly (rely on dns.setDefaultResultOrder for IPv4)
+    // Using IP directly causes SSL Hostname Mismatch errors.
+    const url = `https://${API_HOSTNAME}${API_BASE_PATH}/${pathStr}${request.nextUrl.search}`;
 
     console.log(`[PROXY] Incoming ${request.method} to ${pathStr} (Target: ${url})`);
 
@@ -54,7 +50,7 @@ async function proxyRequest(request: NextRequest, path: string[]) {
         }
     });
 
-    // Manually set Host header because we are using IP in URL
+    // Explicitly set Host header
     headers['Host'] = API_HOSTNAME;
 
     // console.log(`[PROXY] Headers:`, JSON.stringify(headers));
@@ -67,30 +63,38 @@ async function proxyRequest(request: NextRequest, path: string[]) {
     try {
         const body = ['POST', 'PUT'].includes(request.method) ? await request.text() : undefined;
 
-        // Note: When using IP in URL with HTTPS, standard fetch might complain about SSL Hostname mismatch.
-        // Node 18 native fetch doesn't easily allow disabling this check without a custom dispatcher.
-        // We will try standard fetch first. If it fails with "Hostname mismatch", we might need a custom agent.
-        // However, usually Vercel/Node environment might be strict.
-        // A better approach if SSL is strict: Use default URL but pass a custom dispatcher (difficult in Edge/Next).
+        const response = await fetch(url, {
+            method: request.method,
+            headers: headers,
+            body: body,
+            // Disable auto-redirect following to trace 302s if any
+            redirect: 'manual'
+        });
 
-        // REVISION: Using IP directly in HTTPS URL often fails SSL verification (CERT_HAS_EXPIRED or ERR_TLS_CERT_ALTNAME_INVALID).
-        // A safer "Force IPv4" in Node is setting the default lookup order.
-        // But `dns.setDefaultResultOrder('ipv4first')` is available in Node 17+.
+        console.log(`[PROXY] Upstream Status: ${response.status}`);
 
-        // Let's try attempting to set the DNS order globally if possible, OR just use the hostname but hope Vercel respects ipv4first if we can set it.
-        // Actually, replacing the URL host with IP is risky for SSL.
-        // Let's stick to the URL with Hostname, but use a hack:
-        // If we really need to force IPv4, we might need 'node-fetch' with an `http(s).Agent({ family: 4 })`.
+        const responseBody = await response.text();
+        // console.log(`[PROXY] Upstream Body Preview: ${responseBody.substring(0, 200)}`);
 
-        // WAITING: I will NOT apply this edit yet in this tool call. I need to verify if I can use `node-fetch` + agent.
-        // Aborting this specific logic in this thought process.
+        // Create new headers to pass back
+        const responseHeaders = new Headers();
+        response.headers.forEach((value, key) => {
+            responseHeaders.set(key, value);
+        });
 
-        // RETRY STRATEGY:
-        // Next.js provides `fetch`. We can't easily swap the agent.
-        // But we CAN use `dns.setDefaultResultOrder('ipv4first')` if the node version supports it.
-        // Or we can simple rely on the fact that if we resolve it manually, we might need to skip certificate validation OR use a custom dispatcher.
+        return new NextResponse(responseBody, {
+            status: response.status,
+            headers: responseHeaders
+        });
 
-        // Let's try `dns.setDefaultResultOrder('ipv4first')` at the top of the file as a low-impact fix first.
-    } catch (e) { }
+    } catch (error: any) {
+        console.error('[PROXY] Error:', error);
+        // Safe error object for JSON (avoid circular structure crashes)
+        const safeError = {
+            message: error.message || 'Unknown Error',
+            code: error.code || 'UNKNOWN',
+            name: error.name || 'Error'
+        };
+        return NextResponse.json({ success: false, message: 'Proxy Error', error: safeError }, { status: 500 });
+    }
 }
-

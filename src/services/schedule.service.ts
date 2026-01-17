@@ -9,7 +9,9 @@ export const scheduleService = {
         to_date?: string;
         clinic_id?: number;
         user_id?: number;
+        day_of_week?: number;
         time_slot?: 'morning' | 'afternoon';
+        per_page?: number;
     }): Promise<ApiResponse<Schedule[]>> => {
         if (isMockMode()) {
             return mockApiResponse(mockSchedules);
@@ -18,13 +20,9 @@ export const scheduleService = {
         return response.data;
     },
 
-    getWeeklySchedules: async (date?: string) => {
+    getWeeklySchedules: async (week_start?: string) => {
         if (isMockMode()) {
-            // Group mock schedules by "dayIndex_timeSlot"
-            // Mock data day_of_week: 1 (Mon) .. 6 (Sat).
-            // Key format expected: "1_morning", "2_afternoon" etc.
             const grouped: Record<string, Schedule[]> = {};
-
             mockSchedules.forEach(s => {
                 const key = `${s.day_of_week}_${s.time_slot}`;
                 if (!grouped[key]) grouped[key] = [];
@@ -32,8 +30,8 @@ export const scheduleService = {
             });
 
             return mockApiResponse({
-                week_start: date || '',
-                week_end: '', // Not strictly needed for mock display
+                week_start: week_start || '',
+                week_end: '',
                 schedules: grouped,
                 total: mockSchedules.length
             });
@@ -44,18 +42,24 @@ export const scheduleService = {
             week_end: string;
             schedules: Record<string, Schedule[]>;
             total: number;
-        }>>('/schedules/weekly', { params: { week_start: date } });
+        }>>('/schedules/weekly', { params: { week_start } });
         return response.data;
     },
 
-    getDailySchedules: async (date: string): Promise<ApiResponse<{ total: number; schedules: Schedule[] }>> => {
+    getDailySchedules: async (date: string): Promise<ApiResponse<{
+        date: string;
+        day_of_week: number;
+        schedules: Schedule[];
+        total: number;
+    }>> => {
         if (isMockMode()) {
-            const daily = mockSchedules.filter(s => {
-                // Simplified check, normally would check date match
-                // For demo, just return a subset
-                return true;
+            const daily = mockSchedules.filter(s => true); // Mock logic
+            return mockApiResponse({
+                date,
+                day_of_week: new Date(date).getDay(),
+                schedules: daily,
+                total: daily.length
             });
-            return mockApiResponse({ total: daily.length, schedules: daily });
         }
         const response = await api.get<ApiResponse<{
             date: string;

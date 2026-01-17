@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { clinicService } from '@/services/clinic.service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2, DoorOpen } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -18,8 +19,30 @@ export default function ClinicsPage() {
                 <h1 className="text-3xl font-bold tracking-tight">Danh sách Phòng Khám</h1>
             </div>
 
+
             {isLoading ? (
-                <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
+                <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <Card key={i}>
+                            <CardHeader className="pb-2">
+                                <div className="flex justify-between items-start">
+                                    <Skeleton className="h-6 w-3/4" />
+                                    <Skeleton className="h-5 w-5 rounded-full" />
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-1/2" />
+                                    <div className="flex justify-between items-center text-sm">
+                                        <Skeleton className="h-4 w-1/4" />
+                                        <Skeleton className="h-4 w-1/4" />
+                                    </div>
+                                    <Skeleton className="mt-2 h-5 w-20 rounded-full" />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
             ) : (
                 <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
                     {data?.data.map((clinic) => (

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { userService } from '@/services/user.service';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Search, Loader2 } from 'lucide-react';
@@ -43,8 +44,27 @@ export default function DoctorsPage() {
                 />
             </div>
 
+
             {isLoading ? (
-                <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                        <Card key={i}>
+                            <CardHeader className="flex flex-row items-center gap-4">
+                                <Skeleton className="h-12 w-12 rounded-full" />
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-[150px]" />
+                                    <Skeleton className="h-3 w-[100px]" />
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-full" />
+                                    <Skeleton className="h-4 w-full" />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
             ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {data?.data.map((user) => (

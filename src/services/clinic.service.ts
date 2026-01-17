@@ -1,13 +1,12 @@
 import api from '@/lib/api';
-import { ApiResponse, Clinic, Schedule } from '@/types';
-import { isMockMode, mockClinics, mockApiResponse, mockSchedules } from '@/lib/mock-data';
+import { ApiResponse, Clinic, Schedule, User } from '@/types';
+import { isMockMode, mockClinics, mockApiResponse, mockSchedules, mockUsers } from '@/lib/mock-data';
 
 export const clinicService = {
     async getClinics(params?: {
         is_active?: boolean;
         category_id?: number;
         search?: string;
-        page?: number;
         per_page?: number;
     }): Promise<ApiResponse<Clinic[]>> {
         if (isMockMode()) {
@@ -38,6 +37,15 @@ export const clinicService = {
             return mockApiResponse(schedules);
         }
         const response = await api.get<ApiResponse<Schedule[]>>(`/clinics/${id}/schedules`, { params });
+        return response.data;
+    },
+
+    async getClinicStaff(id: number): Promise<ApiResponse<User[]>> {
+        if (isMockMode()) {
+            // Basic mock
+            return mockApiResponse(mockUsers);
+        }
+        const response = await api.get<ApiResponse<User[]>>(`/clinics/${id}/staff`);
         return response.data;
     }
 };

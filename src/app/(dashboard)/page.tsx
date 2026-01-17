@@ -16,6 +16,9 @@ import {
 } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
 
+
+import { Skeleton } from '@/components/ui/skeleton';
+
 export default function DashboardPage() {
     const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -46,6 +49,8 @@ export default function DashboardPage() {
         return schedule ? schedule.user : null;
     };
 
+    const isLoading = isLoadingSchedules || isLoadingClinics;
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -62,7 +67,7 @@ export default function DashboardPage() {
                         <CalendarCheck className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{schedulesTodayCount}</div>
+                        {isLoading ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{schedulesTodayCount}</div>}
                         <p className="text-xs text-muted-foreground">Ca trực đã xếp</p>
                     </CardContent>
                 </Card>
@@ -72,7 +77,7 @@ export default function DashboardPage() {
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{uniqueDoctors}</div>
+                        {isLoading ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{uniqueDoctors}</div>}
                         <p className="text-xs text-muted-foreground">Bác sĩ đang làm việc</p>
                     </CardContent>
                 </Card>
@@ -82,7 +87,7 @@ export default function DashboardPage() {
                         <Building2 className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{activeClinicsCount}</div>
+                        {isLoading ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{activeClinicsCount}</div>}
                         <p className="text-xs text-muted-foreground">Phòng khám mở cửa</p>
                     </CardContent>
                 </Card>
@@ -103,8 +108,13 @@ export default function DashboardPage() {
                     <CardTitle>Lịch trực hôm nay</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {(isLoadingSchedules || isLoadingClinics) ? (
-                        <div className="text-center py-4">Đang tải dữ liệu...</div>
+                    {isLoading ? (
+                        <div className="space-y-4">
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-20 w-full" />
+                            <Skeleton className="h-20 w-full" />
+                            <Skeleton className="h-20 w-full" />
+                        </div>
                     ) : (
                         <Table>
                             <TableHeader>
@@ -160,3 +170,4 @@ export default function DashboardPage() {
         </div>
     );
 }
+

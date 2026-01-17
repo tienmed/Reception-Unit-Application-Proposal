@@ -3,12 +3,17 @@ export interface User {
     name: string;
     email: string;
     employee_id: string;
+    cccd_number?: string;
     role: string;
     is_active: boolean;
+    created_at?: string;
     doctor_profile?: {
         specialty: string;
         phone?: string;
     };
+    legal_schedules?: any[]; // Refine type if legal_schedule structure is known
+    assigned_clinics?: any[]; // Refine type if assigned_clinics structure is known
+    clinic_schedules?: any[]; // Refine type if clinic_schedules structure is known
 }
 
 export interface Clinic {
@@ -20,6 +25,7 @@ export interface Clinic {
         id: number;
         name: string;
     };
+    staff?: User[];
 }
 
 export interface Schedule {

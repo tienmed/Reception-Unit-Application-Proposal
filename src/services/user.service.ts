@@ -3,13 +3,21 @@ import { ApiResponse, User, Schedule } from '@/types';
 import { isMockMode, mockUsers, mockApiResponse, mockSchedules } from '@/lib/mock-data';
 
 export const userService = {
-    async getUsers(params?: any): Promise<ApiResponse<User[]>> {
+    async getUsers(params?: {
+        role?: string;
+        is_active?: boolean;
+        search?: string;
+        per_page?: number;
+        page?: number;
+    }): Promise<ApiResponse<User[]>> {
         if (isMockMode()) {
             let users = [...mockUsers];
-            // Simple search mock
             if (params?.search) {
                 const lowerQuery = params.search.toLowerCase();
                 users = users.filter(u => u.name.toLowerCase().includes(lowerQuery));
+            }
+            if (params?.role) {
+                users = users.filter(u => u.role === params.role);
             }
             return mockApiResponse(users);
         }
@@ -27,7 +35,10 @@ export const userService = {
         return response.data;
     },
 
-    async getUserSchedules(id: number, params?: any): Promise<ApiResponse<Schedule[]>> {
+    async getUserSchedules(id: number, params?: {
+        from_date?: string;
+        to_date?: string;
+    }): Promise<ApiResponse<Schedule[]>> {
         if (isMockMode()) {
             const schedules = mockSchedules.filter(s => s.user_id === id);
             return mockApiResponse(schedules);

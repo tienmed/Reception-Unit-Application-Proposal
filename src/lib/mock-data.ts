@@ -4,8 +4,8 @@ import { addDays, startOfWeek, format } from 'date-fns';
 export const MOCK_TOKEN = 'demo';
 
 export const isMockMode = (): boolean => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem('api_token') === MOCK_TOKEN;
+    // Force mock mode off for integration
+    return process.env.NEXT_PUBLIC_USE_MOCK === 'true';
 };
 
 // --- Mock Users (Doctors) ---

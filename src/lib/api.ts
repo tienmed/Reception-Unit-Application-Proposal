@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toast } from 'sonner';
 
 const API_URL = '/api';
 
@@ -38,19 +39,37 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+    const message = error.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại.';
+
+    if (status === 401) {
       if (typeof window !== 'undefined') {
         const envToken = process.env.NEXT_PUBLIC_API_TOKEN;
-        // Only redirect to login if we don't have a hardcoded env token.
-        // If we have an env token and getting 401, redirecting to login will just loop.
         if (!envToken) {
+          toast.error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
           localStorage.removeItem('api_token');
-          window.location.href = '/login';
+          // Optional: Delay redirect to let toast show
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 1000);
         } else {
+          toast.error('Lỗi xác thực (401). Kiểm tra cấu hình Token.');
           console.error('API Error 401 with Env Token. Check token validity or Proxy.');
         }
       }
+    } else if (status === 403) {
+      toast.error('Bạn không có quyền thực hiện thao tác này.');
+    } else if (status === 500) {
+      toast.error('Lỗi máy chủ (500). ' + message);
+    } else if (status === 404) {
+      // toast.error('Không tìm thấy dữ liệu.'); // Optional, might be too noisy
+    } else if (!window.navigator.onLine) {
+      toast.error('Mất kết nối Internet.');
+    } else {
+      // Generic error
+      // toast.error(message); 
     }
+
     return Promise.reject(error);
   }
 );
