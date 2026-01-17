@@ -20,6 +20,7 @@ export default function TestApiPage() {
     const [token, setToken] = useState('');
     const [headerName, setHeaderName] = useState('Authorization');
     const [tokenPrefix, setTokenPrefix] = useState('Bearer ');
+    const [queryParam, setQueryParam] = useState(''); // New state for Query Param name
 
     useEffect(() => {
         // Load env token on mount
@@ -30,32 +31,51 @@ export default function TestApiPage() {
 
     const addLog = (msg: string) => setLogs(prev => [`${new Date().toLocaleTimeString()}: ${msg}`, ...prev]);
 
-    const applyPreset = (name: string, prefix: string) => {
-        setHeaderName(name);
-        setTokenPrefix(prefix);
-        addLog(`Applied Preset: ${name} with prefix '${prefix}'`);
+    const applyPreset = (type: string) => {
+        setQueryParam(''); // Reset query param by default
+        if (type === 'Bearer') {
+            setHeaderName('Authorization');
+            setTokenPrefix('Bearer ');
+        } else if (type === 'Raw') {
+            setHeaderName('Authorization');
+            setTokenPrefix('');
+        } else if (type === 'Apache') {
+            setHeaderName('X-Authorization'); // Common workaround for Apache stripping Auth header
+            setTokenPrefix('Bearer ');
+        } else if (type === 'Query') {
+            setHeaderName(''); // No header
+            setQueryParam('api_token'); // Common Laravel/PHP query param
+            setTokenPrefix('');
+        }
+        addLog(`Applied Preset: ${type}`);
     };
 
     const fetchData = async () => {
         setLoading(true);
         setError('');
         setLogs([]);
-        addLog(`Starting fetch to ${endpoint}...`);
-        addLog(`Header: ${headerName}`);
-        addLog(`Prefix: '${tokenPrefix}'`);
-        addLog(`Token Length: ${token.length}`);
+
+        let url = endpoint;
+        if (queryParam && token) {
+            url += `${url.includes('?') ? '&' : '?'}${queryParam}=${token}`;
+        }
+
+        addLog(`Fetching ${url}...`);
 
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
         };
 
-        if (token) {
+        if (headerName && token) {
             headers[headerName] = `${tokenPrefix}${token}`;
+            addLog(`Header: ${headerName}: ${tokenPrefix}***`);
+        } else if (queryParam) {
+            addLog(`Query Param: ${queryParam}=***`);
         }
 
         try {
-            const res = await fetch(endpoint, { headers });
+            const res = await fetch(url, { headers });
             addLog(`Status: ${res.status} ${res.statusText}`);
 
             const text = await res.text();
@@ -64,7 +84,6 @@ export default function TestApiPage() {
                 addLog(`Response JSON: ${JSON.stringify(data).substring(0, 150)}...`);
 
                 if (data.success || Array.isArray(data)) {
-                    // Try to guess data type for display
                     if (endpoint.includes('users')) setUsers(data.data || data);
                     if (endpoint.includes('clinics')) setClinics(data.data || data);
                 }
@@ -84,7 +103,7 @@ export default function TestApiPage() {
 
     return (
         <div className="p-8 space-y-6 container mx-auto">
-            <h1 className="text-3xl font-bold">API Debugger</h1>
+            <h1 className="text-3xl font-bold">API Debugger v3</h1>
 
             <Card>
                 <CardHeader>
@@ -102,14 +121,16 @@ export default function TestApiPage() {
                                 <option value="/api/users">/api/users (Doctors)</option>
                                 <option value="/api/clinics">/api/clinics</option>
                                 <option value="/api/schedules/daily">/api/schedules/daily</option>
+                                <option value="/api/auth/verify">/api/auth/verify</option>
                             </select>
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Quick Presets</label>
-                            <div className="flex gap-2">
-                                <Button variant="outline" size="sm" onClick={() => applyPreset('Authorization', 'Bearer ')}>Bearer Token</Button>
-                                <Button variant="outline" size="sm" onClick={() => applyPreset('Authorization', '')}>Raw Token</Button>
-                                <Button variant="outline" size="sm" onClick={() => applyPreset('x-api-key', '')}>API Key</Button>
+                            <div className="flex flex-wrap gap-2">
+                                <Button variant="outline" size="sm" onClick={() => applyPreset('Bearer')}>Bearer</Button>
+                                <Button variant="outline" size="sm" onClick={() => applyPreset('Raw')}>Raw</Button>
+                                <Button variant="outline" size="sm" onClick={() => applyPreset('Apache')}>X-Auth (Apache)</Button>
+                                <Button variant="outline" size="sm" onClick={() => applyPreset('Query')}>?api_token=</Button>
                             </div>
                         </div>
                     </div>
@@ -121,19 +142,20 @@ export default function TestApiPage() {
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                 value={headerName}
                                 onChange={(e) => setHeaderName(e.target.value)}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Prefix</label>
-                            <input
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                value={tokenPrefix}
-                                onChange={(e) => setTokenPrefix(e.target.value)}
                                 placeholder="(none)"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Token (Last 4: {token.slice(-4)})</label>
+                            <label className="text-sm font-medium">Query Param</label>
+                            <input
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                value={queryParam}
+                                onChange={(e) => setQueryParam(e.target.value)}
+                                placeholder="(none)"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Token</label>
                             <input
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                 value={token}
