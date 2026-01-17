@@ -15,35 +15,55 @@ export default function TestApiPage() {
     const [error, setError] = useState('');
     const [logs, setLogs] = useState<string[]>([]);
 
-    const addLog = (msg: string) => setLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${msg}`]);
+    // Auth Config State
+    const [token, setToken] = useState('');
+    const [headerName, setHeaderName] = useState('Authorization');
+    const [tokenPrefix, setTokenPrefix] = useState('Bearer ');
+
+    useEffect(() => {
+        // Load env token on mount
+        if (typeof window !== 'undefined') {
+            setToken(localStorage.getItem('api_token') || process.env.NEXT_PUBLIC_API_TOKEN || '');
+        }
+    }, []);
+
+    const addLog = (msg: string) => setLogs(prev => [`${new Date().toLocaleTimeString()}: ${msg}`, ...prev]);
 
     const fetchData = async () => {
         setLoading(true);
         setError('');
         setLogs([]);
         addLog('Starting data fetch...');
+        addLog(`Config: ${headerName}: ${tokenPrefix}***`);
+
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        };
+
+        if (token) {
+            headers[headerName] = `${tokenPrefix}${token}`;
+        }
 
         try {
-            // Fetch Users
-            addLog('Fetching Users...');
-            const userRes = await userService.getUsers();
-            addLog(`Users Response Status: ${userRes.success ? 'Success' : 'Failed'}`);
-            if (userRes.success) {
-                setUsers(userRes.data);
-                addLog(`Loaded ${userRes.data.length} users.`);
-            } else {
-                addLog(`User Error: ${userRes.message}`);
-            }
+            // Manual fetch to bypass global interceptor for this test
+            addLog('Fetching Users via /api/users...');
+            const userRes = await fetch('/api/users', { headers });
+            const userStatus = userRes.status;
+            addLog(`Users Status: ${userStatus} ${userRes.statusText}`);
 
-            // Fetch Clinics
-            addLog('Fetching Clinics...');
-            const clinicRes = await clinicService.getClinics();
-            addLog(`Clinics Response Status: ${clinicRes.success ? 'Success' : 'Failed'}`);
-            if (clinicRes.success) {
-                setClinics(clinicRes.data);
-                addLog(`Loaded ${clinicRes.data.length} clinics.`);
+            if (userRes.ok) {
+                const data = await userRes.json();
+                if (data.success) {
+                    setUsers(data.data);
+                    addLog(`Loaded ${data.data.length} users.`);
+                } else {
+                    addLog(`API Response Error: ${data.message}`);
+                }
             } else {
-                addLog(`Clinic Error: ${clinicRes.message}`);
+                const text = await userRes.text();
+                addLog(`Error Body: ${text.substring(0, 100)}...`);
+                throw new Error(`HTTP ${userStatus}`);
             }
 
         } catch (err: any) {
@@ -58,15 +78,45 @@ export default function TestApiPage() {
 
     return (
         <div className="p-8 space-y-6 container mx-auto">
-            <h1 className="text-3xl font-bold">API Connectivity Test</h1>
+            <h1 className="text-3xl font-bold">API Connectivity Test (Advanced)</h1>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Control Panel</CardTitle>
+                    <CardTitle>Auth Configuration</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <Button onClick={fetchData} disabled={loading}>
-                        {loading ? 'Fetching...' : 'Run Test Fetch'}
+                    <div className="grid md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Header Name</label>
+                            <input
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                value={headerName}
+                                onChange={(e) => setHeaderName(e.target.value)}
+                                placeholder="Authorization"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Prefix (e.g. 'Bearer ')</label>
+                            <input
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                value={tokenPrefix}
+                                onChange={(e) => setTokenPrefix(e.target.value)}
+                                placeholder="Bearer "
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Token</label>
+                            <input
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                value={token}
+                                onChange={(e) => setToken(e.target.value)}
+                                type="password"
+                            />
+                        </div>
+                    </div>
+
+                    <Button onClick={fetchData} disabled={loading} className="w-full">
+                        {loading ? 'Fetching via Proxy...' : 'Test Connection'}
                     </Button>
 
                     {error && (
