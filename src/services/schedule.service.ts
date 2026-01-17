@@ -68,5 +68,19 @@ export const scheduleService = {
             total: number;
         }>>('/schedules/daily', { params: { date } });
         return response.data;
-    }
-};
+    async getMergedWeeklySchedule(weekStart: string, weekEnd: string) {
+            if (isMockMode()) {
+                return this.getWeeklySchedules(weekStart); // Fallback mock
+            }
+            const response = await api.get<{
+                success: boolean;
+                data: {
+                    clinics: any[]; // Typed appropriately in usage
+                    schedules: Schedule[];
+                }
+            }>('/bff/weekly-schedule', {
+                params: { week_start: weekStart, week_end: weekEnd }
+            });
+            return response.data; // Wrapper { success, data }
+        }
+    };

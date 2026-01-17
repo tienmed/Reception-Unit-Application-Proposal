@@ -21,6 +21,7 @@ export interface Clinic {
     name: string;
     capacity: number;
     is_active: boolean;
+    category_id?: number; // Added to match API response
     category?: {
         id: number;
         name: string;
