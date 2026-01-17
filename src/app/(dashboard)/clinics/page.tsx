@@ -19,6 +19,15 @@ export default function ClinicsPage() {
                 <h1 className="text-3xl font-bold tracking-tight">Danh sách Phòng Khám</h1>
             </div>
 
+            {/* DEBUG: Dump Data to verify structure */}
+            <div className="bg-slate-100 p-4 rounded text-xs font-mono max-h-40 overflow-auto border border-red-500">
+                <p className="font-bold text-red-500">DEBUG DATA DUMP:</p>
+                <p>IsLoading: {isLoading ? 'true' : 'false'}</p>
+                <p>Data Type: {typeof data}</p>
+                <p>Has Data Array: {Array.isArray(data?.data) ? 'Yes' : 'No'}</p>
+                <pre>{JSON.stringify(data, null, 2)}</pre>
+            </div>
+
 
             {isLoading ? (
                 <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
