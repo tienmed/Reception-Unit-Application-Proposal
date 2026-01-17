@@ -166,14 +166,15 @@ export default function SchedulesPage() {
                                                         day.isWeekend && !hasMorning && !hasAfternoon ? "bg-orange-50/20" : ""
                                                     )}
                                                 >
-                                                    <div className="flex flex-col h-full min-h-[6rem]">
+                                                    <div className="flex flex-col h-full min-h-[8rem]">
                                                         {/* Morning */}
                                                         <div className={cn(
-                                                            "flex-1 p-1.5 flex items-center justify-center text-center border-b min-h-[3rem]",
-                                                            hasMorning ? clinicColorClass : "bg-gray-50/50 text-gray-300"
+                                                            "flex-1 p-1 flex flex-col items-center justify-start text-center border-b border-gray-200",
+                                                            hasMorning ? clinicColorClass : "bg-white text-gray-300"
                                                         )}>
+                                                            <div className="text-[9px] uppercase font-semibold opacity-50 mb-0.5 w-full border-b border-black/5 pb-0.5">Sáng</div>
                                                             {hasMorning ? (
-                                                                <span className="font-bold leading-snug break-words">
+                                                                <span className="font-bold text-[11px] leading-tight break-words mt-1">
                                                                     {morningSchedule.user?.name}
                                                                 </span>
                                                             ) : (
@@ -183,11 +184,12 @@ export default function SchedulesPage() {
 
                                                         {/* Afternoon */}
                                                         <div className={cn(
-                                                            "flex-1 p-1.5 flex items-center justify-center text-center min-h-[3rem]",
-                                                            hasAfternoon ? clinicColorClass : "bg-gray-50/50 text-gray-300"
+                                                            "flex-1 p-1 flex flex-col items-center justify-start text-center",
+                                                            hasAfternoon ? clinicColorClass : "bg-slate-50 text-gray-300"
                                                         )}>
+                                                            <div className="text-[9px] uppercase font-semibold opacity-50 mb-0.5 w-full border-b border-black/5 pb-0.5">Chiều</div>
                                                             {hasAfternoon ? (
-                                                                <span className="font-bold leading-snug break-words">
+                                                                <span className="font-bold text-[11px] leading-tight break-words mt-1">
                                                                     {afternoonSchedule.user?.name}
                                                                 </span>
                                                             ) : (
