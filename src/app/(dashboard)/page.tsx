@@ -6,18 +6,27 @@ import { clinicService } from '@/services/clinic.service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Building2, CalendarCheck, Clock } from 'lucide-react';
 import { format } from 'date-fns';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { Badge } from '@/components/ui/badge';
 
 export default function DashboardPage() {
     const today = format(new Date(), 'yyyy-MM-dd');
 
     // Fetch daily schedules to count doctors working today
-    const { data: dailyData } = useQuery({
+    const { data: dailyData, isLoading: isLoadingSchedules } = useQuery({
         queryKey: ['schedules', 'daily', today],
         queryFn: () => scheduleService.getDailySchedules(today),
     });
 
     // Fetch active clinics
-    const { data: clinicsData } = useQuery({
+    const { data: clinicsData, isLoading: isLoadingClinics } = useQuery({
         queryKey: ['clinics'],
         queryFn: () => clinicService.getClinics({ is_active: true }),
     });
@@ -26,7 +35,16 @@ export default function DashboardPage() {
     const schedulesTodayCount = dailyData?.data?.total || 0;
 
     // Count unique doctors working today
-    const uniqueDoctors = new Set(dailyData?.data?.schedules.map((s: any) => s.user_id)).size || 0;
+    const uniqueDoctors = new Set(dailyData?.data?.schedules.map((s) => s.user_id)).size || 0;
+
+    const schedules = dailyData?.data?.schedules || [];
+    const clinics = clinicsData?.data || [];
+
+    // Helper to find doctor for a clinic and slot
+    const getDoctorForSlot = (clinicId: number, slot: 'morning' | 'afternoon') => {
+        const schedule = schedules.find(s => s.clinic_id === clinicId && s.time_slot === slot);
+        return schedule ? schedule.user : null;
+    };
 
     return (
         <div className="space-y-6">
@@ -80,30 +98,65 @@ export default function DashboardPage() {
                 </Card>
             </div>
 
-            {/* Recent Activity or Quick List could go here */}
-            <h2 className="text-xl font-semibold mt-8">Lịch trực hôm nay</h2>
-            <div className="border rounded-lg p-4 bg-white dark:bg-card">
-                {/* Simple list for now, ideally reused Schedule component */}
-                {dailyData?.data?.schedules.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">Chưa có lịch trực nào hôm nay.</p>
-                ) : (
-                    <div className="space-y-4">
-                        {dailyData?.data?.schedules.map((schedule: any) => (
-                            <div key={schedule.id} className="flex justify-between items-center border-b last:border-0 pb-2 last:pb-0">
-                                <div>
-                                    <div className="font-medium">{schedule.user?.name}</div>
-                                    <div className="text-sm text-muted-foreground">{schedule.clinic?.name}</div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className={`px-2 py-1 rounded text-xs ${schedule.time_slot === 'morning' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'}`}>
-                                        {schedule.time_slot === 'morning' ? 'Sáng' : 'Chiều'}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+            <Card className="col-span-4">
+                <CardHeader>
+                    <CardTitle>Lịch trực hôm nay</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {(isLoadingSchedules || isLoadingClinics) ? (
+                        <div className="text-center py-4">Đang tải dữ liệu...</div>
+                    ) : (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[300px]">Phòng khám</TableHead>
+                                    <TableHead>Sáng</TableHead>
+                                    <TableHead>Chiều</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {clinics.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={3} className="text-center py-4">Chưa có dữ liệu phòng khám</TableCell>
+                                    </TableRow>
+                                ) : (
+                                    clinics.map((clinic) => {
+                                        const morningDoc = getDoctorForSlot(clinic.id, 'morning');
+                                        const afternoonDoc = getDoctorForSlot(clinic.id, 'afternoon');
+
+                                        return (
+                                            <TableRow key={clinic.id}>
+                                                <TableCell className="font-medium">
+                                                    <div>{clinic.name}</div>
+                                                    <div className="text-xs text-muted-foreground">{clinic.category?.name}</div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {morningDoc ? (
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="font-medium text-blue-700">{morningDoc.name}</div>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-muted-foreground text-xs italic">-- Trống --</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {afternoonDoc ? (
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="font-medium text-blue-700">{afternoonDoc.name}</div>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-muted-foreground text-xs italic">-- Trống --</span>
+                                                    )}
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })
+                                )}
+                            </TableBody>
+                        </Table>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 }

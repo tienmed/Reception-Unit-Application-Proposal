@@ -23,7 +23,7 @@ export default function ClinicsPage() {
             ) : (
                 <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
                     {data?.data.map((clinic) => (
-                        <Card key={clinic.id}>
+                        <Card key={clinic.id} className="hover:shadow-md transition-shadow cursor-pointer">
                             <CardHeader className="pb-2">
                                 <div className="flex justify-between items-start">
                                     <CardTitle className="text-lg">{clinic.name}</CardTitle>

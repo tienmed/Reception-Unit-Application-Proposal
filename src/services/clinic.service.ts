@@ -1,30 +1,43 @@
 import api from '@/lib/api';
-import { ApiResponse, Clinic } from '@/types';
+import { ApiResponse, Clinic, Schedule } from '@/types';
+import { isMockMode, mockClinics, mockApiResponse, mockSchedules } from '@/lib/mock-data';
 
 export const clinicService = {
-    getClinics: async (params?: {
+    async getClinics(params?: {
         is_active?: boolean;
         category_id?: number;
         search?: string;
         page?: number;
         per_page?: number;
-    }) => {
+    }): Promise<ApiResponse<Clinic[]>> {
+        if (isMockMode()) {
+            return mockApiResponse(mockClinics);
+        }
         const response = await api.get<ApiResponse<Clinic[]>>('/clinics', { params });
         return response.data;
     },
 
-    getClinic: async (id: number) => {
+    async getClinic(id: number): Promise<ApiResponse<Clinic>> {
+        if (isMockMode()) {
+            const clinic = mockClinics.find(c => c.id === id);
+            if (!clinic) throw new Error('Clinic not found');
+            return mockApiResponse(clinic);
+        }
         const response = await api.get<ApiResponse<Clinic>>(`/clinics/${id}`);
         return response.data;
     },
 
-    getClinicSchedules: async (id: number, params?: {
+    async getClinicSchedules(id: number, params?: {
         from_date?: string;
         to_date?: string;
         day_of_week?: number;
         time_slot?: 'morning' | 'afternoon';
-    }) => {
-        const response = await api.get(`/clinics/${id}/schedules`, { params });
+    }): Promise<ApiResponse<Schedule[]>> {
+        if (isMockMode()) {
+            const schedules = mockSchedules.filter(s => s.clinic_id === id);
+            return mockApiResponse(schedules);
+        }
+        const response = await api.get<ApiResponse<Schedule[]>>(`/clinics/${id}/schedules`, { params });
         return response.data;
     }
 };

@@ -12,12 +12,22 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
+    // Check for token in localStorage (client-side) or environment variable (fallback)
+    let token: string | null = null;
+    
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('api_token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+      token = localStorage.getItem('api_token');
     }
+
+    // Fallback to env var if not in local storage or if we are server-side (though this specific interceptor logic is mostly client-centric)
+    if (!token) {
+      token = process.env.NEXT_PUBLIC_API_TOKEN || null;
+    }
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    
     return config;
   },
   (error) => {

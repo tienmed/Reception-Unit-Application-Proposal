@@ -14,10 +14,16 @@ export default function DashboardLayout({
 
     useEffect(() => {
         const token = localStorage.getItem('api_token');
-        if (!token) {
-            router.push('/login');
-        } else {
+        const envToken = process.env.NEXT_PUBLIC_API_TOKEN;
+
+        if (token) {
             setAuthorized(true);
+        } else if (envToken) {
+            // If no local token but env token exists, use it
+            localStorage.setItem('api_token', envToken);
+            setAuthorized(true);
+        } else {
+            router.push('/login');
         }
     }, [router]);
 

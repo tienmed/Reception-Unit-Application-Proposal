@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/auth.service';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +14,35 @@ export default function LoginPage() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+
+    // Auto-login with env token if available and no local token
+    useEffect(() => {
+        const envToken = process.env.NEXT_PUBLIC_API_TOKEN;
+        const localToken = localStorage.getItem('api_token');
+
+        if (envToken && !localToken) {
+            setLoading(true);
+            authService.verifyToken(envToken)
+                .then(response => {
+                    if (response.success && response.data.is_valid) {
+                        localStorage.setItem('api_token', envToken);
+                        if (response.data.name) {
+                            localStorage.setItem('user_name', response.data.name);
+                        }
+                        router.push('/');
+                    } else {
+                        // If env token is invalid, just let user try manual login
+                        console.warn('Environment API token is invalid');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error verifying env token:', err);
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
+        }
+    }, [router]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -54,7 +83,7 @@ export default function LoginPage() {
                                 id="token"
                                 type="password"
                                 placeholder="eyJ..."
-                                value={token}
+                                value={token || process.env.NEXT_PUBLIC_API_TOKEN || ''}
                                 onChange={(e) => setToken(e.target.value)}
                                 required
                             />

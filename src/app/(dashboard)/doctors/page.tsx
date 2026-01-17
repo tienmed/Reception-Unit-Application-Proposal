@@ -48,7 +48,7 @@ export default function DoctorsPage() {
             ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {data?.data.map((user) => (
-                        <Card key={user.id} className="hover:shadow-lg transition-shadow">
+                        <Card key={user.id} className="hover:shadow-lg transition-shadow cursor-pointer">
                             <CardHeader className="flex flex-row items-center gap-4">
                                 <Avatar className="h-12 w-12">
                                     <AvatarImage src={`https://ui-avatars.com/api/?name=${user.name}`} />
