@@ -147,9 +147,9 @@ export default function SchedulesPage() {
                             {clinics.map((clinic) => {
                                 const clinicColorClass = getClinicColor(clinic.id);
                                 return (
-                                    <tr key={clinic.id} className="h-20"> {/* Minimum height for rows */}
-                                        <td className="border p-2 font-semibold text-xs md:text-sm bg-white sticky left-0 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] truncate">
-                                            {clinic.name}
+                                    <tr key={clinic.id} className="min-h-[6rem]"> {/* Allow expansion */}
+                                        <td className="border p-2 font-semibold text-xs bg-white sticky left-0 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                                            <div className="line-clamp-3">{clinic.name}</div>
                                         </td>
                                         {weekDays.map((day) => {
                                             const morningSchedule = getClinicSchedules(clinic.id, day.date, 'morning');
@@ -162,36 +162,36 @@ export default function SchedulesPage() {
                                                 <td
                                                     key={day.date.toISOString()}
                                                     className={cn(
-                                                        "border p-0 align-top transition-colors text-[10px] md:text-xs",
+                                                        "border p-0 align-top transition-colors text-[10px] md:text-xs h-full",
                                                         day.isWeekend && !hasMorning && !hasAfternoon ? "bg-orange-50/20" : ""
                                                     )}
                                                 >
-                                                    <div className="flex flex-col h-full min-h-[5rem]">
+                                                    <div className="flex flex-col h-full min-h-[6rem]">
                                                         {/* Morning */}
                                                         <div className={cn(
-                                                            "flex-1 p-1 flex items-center justify-center text-center border-b",
-                                                            hasMorning ? clinicColorClass : "bg-gray-100/50 text-gray-400"
+                                                            "flex-1 p-1.5 flex items-center justify-center text-center border-b min-h-[3rem]",
+                                                            hasMorning ? clinicColorClass : "bg-gray-50/50 text-gray-300"
                                                         )}>
                                                             {hasMorning ? (
-                                                                <span className="font-bold line-clamp-2 leading-tight">
+                                                                <span className="font-bold leading-snug break-words">
                                                                     {morningSchedule.user?.name}
                                                                 </span>
                                                             ) : (
-                                                                <span className="italic opacity-50 text-[9px]"></span> // Empty space instead of "(Trống)" to save space/cleaner
+                                                                <span className="h-4"></span>
                                                             )}
                                                         </div>
 
                                                         {/* Afternoon */}
                                                         <div className={cn(
-                                                            "flex-1 p-1 flex items-center justify-center text-center",
-                                                            hasAfternoon ? clinicColorClass : "bg-gray-100/50 text-gray-400"
+                                                            "flex-1 p-1.5 flex items-center justify-center text-center min-h-[3rem]",
+                                                            hasAfternoon ? clinicColorClass : "bg-gray-50/50 text-gray-300"
                                                         )}>
                                                             {hasAfternoon ? (
-                                                                <span className="font-bold line-clamp-2 leading-tight">
+                                                                <span className="font-bold leading-snug break-words">
                                                                     {afternoonSchedule.user?.name}
                                                                 </span>
                                                             ) : (
-                                                                <span className="italic opacity-50 text-[9px]"></span>
+                                                                <span className="h-4"></span>
                                                             )}
                                                         </div>
                                                     </div>
