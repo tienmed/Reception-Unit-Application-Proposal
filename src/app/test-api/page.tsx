@@ -16,6 +16,7 @@ export default function TestApiPage() {
     const [logs, setLogs] = useState<string[]>([]);
 
     // Auth Config State
+    const [endpoint, setEndpoint] = useState('/api/users');
     const [token, setToken] = useState('');
     const [headerName, setHeaderName] = useState('Authorization');
     const [tokenPrefix, setTokenPrefix] = useState('Bearer ');
@@ -29,12 +30,20 @@ export default function TestApiPage() {
 
     const addLog = (msg: string) => setLogs(prev => [`${new Date().toLocaleTimeString()}: ${msg}`, ...prev]);
 
+    const applyPreset = (name: string, prefix: string) => {
+        setHeaderName(name);
+        setTokenPrefix(prefix);
+        addLog(`Applied Preset: ${name} with prefix '${prefix}'`);
+    };
+
     const fetchData = async () => {
         setLoading(true);
         setError('');
         setLogs([]);
-        addLog('Starting data fetch...');
-        addLog(`Config: ${headerName}: ${tokenPrefix}***`);
+        addLog(`Starting fetch to ${endpoint}...`);
+        addLog(`Header: ${headerName}`);
+        addLog(`Prefix: '${tokenPrefix}'`);
+        addLog(`Token Length: ${token.length}`);
 
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
@@ -46,24 +55,21 @@ export default function TestApiPage() {
         }
 
         try {
-            // Manual fetch to bypass global interceptor for this test
-            addLog('Fetching Users via /api/users...');
-            const userRes = await fetch('/api/users', { headers });
-            const userStatus = userRes.status;
-            addLog(`Users Status: ${userStatus} ${userRes.statusText}`);
+            const res = await fetch(endpoint, { headers });
+            addLog(`Status: ${res.status} ${res.statusText}`);
 
-            if (userRes.ok) {
-                const data = await userRes.json();
-                if (data.success) {
-                    setUsers(data.data);
-                    addLog(`Loaded ${data.data.length} users.`);
-                } else {
-                    addLog(`API Response Error: ${data.message}`);
+            const text = await res.text();
+            try {
+                const data = JSON.parse(text);
+                addLog(`Response JSON: ${JSON.stringify(data).substring(0, 150)}...`);
+
+                if (data.success || Array.isArray(data)) {
+                    // Try to guess data type for display
+                    if (endpoint.includes('users')) setUsers(data.data || data);
+                    if (endpoint.includes('clinics')) setClinics(data.data || data);
                 }
-            } else {
-                const text = await userRes.text();
-                addLog(`Error Body: ${text.substring(0, 100)}...`);
-                throw new Error(`HTTP ${userStatus}`);
+            } catch (e) {
+                addLog(`Response Body (Not JSON): ${text.substring(0, 200)}...`);
             }
 
         } catch (err: any) {
@@ -78,34 +84,56 @@ export default function TestApiPage() {
 
     return (
         <div className="p-8 space-y-6 container mx-auto">
-            <h1 className="text-3xl font-bold">API Connectivity Test (Advanced)</h1>
+            <h1 className="text-3xl font-bold">API Debugger</h1>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Auth Configuration</CardTitle>
+                    <CardTitle>Configuration</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="grid md:grid-cols-3 gap-4">
+                    <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Target Endpoint</label>
+                            <select
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                value={endpoint}
+                                onChange={(e) => setEndpoint(e.target.value)}
+                            >
+                                <option value="/api/users">/api/users (Doctors)</option>
+                                <option value="/api/clinics">/api/clinics</option>
+                                <option value="/api/schedules/daily">/api/schedules/daily</option>
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Quick Presets</label>
+                            <div className="flex gap-2">
+                                <Button variant="outline" size="sm" onClick={() => applyPreset('Authorization', 'Bearer ')}>Bearer Token</Button>
+                                <Button variant="outline" size="sm" onClick={() => applyPreset('Authorization', '')}>Raw Token</Button>
+                                <Button variant="outline" size="sm" onClick={() => applyPreset('x-api-key', '')}>API Key</Button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-4 border-t pt-4">
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Header Name</label>
                             <input
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                 value={headerName}
                                 onChange={(e) => setHeaderName(e.target.value)}
-                                placeholder="Authorization"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Prefix (e.g. 'Bearer ')</label>
+                            <label className="text-sm font-medium">Prefix</label>
                             <input
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                 value={tokenPrefix}
                                 onChange={(e) => setTokenPrefix(e.target.value)}
-                                placeholder="Bearer "
+                                placeholder="(none)"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Token</label>
+                            <label className="text-sm font-medium">Token (Last 4: {token.slice(-4)})</label>
                             <input
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                 value={token}
@@ -116,7 +144,7 @@ export default function TestApiPage() {
                     </div>
 
                     <Button onClick={fetchData} disabled={loading} className="w-full">
-                        {loading ? 'Fetching via Proxy...' : 'Test Connection'}
+                        {loading ? 'Testing...' : 'Test Connection'}
                     </Button>
 
                     {error && (
