@@ -35,7 +35,12 @@ export default function SchedulesPage() {
     const weekStartStr = format(weekStart, 'yyyy-MM-dd');
 
     // Fetch Schedules
-    const { data: scheduleData, isLoading: isLoadingSchedules } = useQuery({
+    const {
+        data: scheduleData,
+        isLoading: isLoadingSchedules,
+        error: scheduleError,
+        isError: isScheduleError
+    } = useQuery({
         queryKey: ['schedules', 'weekly', weekStartStr],
         queryFn: () => scheduleService.getWeeklySchedules(weekStartStr),
     });
@@ -108,13 +113,13 @@ export default function SchedulesPage() {
                 </div>
             </div>
 
-
             {/* DEBUG: Dump Data to verify structure */}
             <div className="bg-slate-100 p-4 rounded text-xs font-mono max-h-40 overflow-auto border border-red-500 mb-2">
                 <p className="font-bold text-red-500">DEBUG DATA DUMP (Schedules):</p>
                 <p>IsLoading: {isLoading ? 'true' : 'false'}</p>
-                <p className="text-red-500 font-bold">IsError: {isLoadingSchedules || isLoadingClinics ? '...' : (scheduleData === undefined ? 'Likely Error' : 'No')}</p>
-                <p>Error Details: {JSON.stringify((scheduleData as any)?.error || 'No explicit error obj', null, 2)}</p>
+                <p className="text-red-500 font-bold">IsError: {isScheduleError ? 'YES' : 'No'}</p>
+                {/* @ts-ignore */}
+                <p>Error Msg: {scheduleError?.message || JSON.stringify(scheduleError)}</p>
                 <p>Schedules Data Type: {typeof scheduleData}</p>
                 <pre>{JSON.stringify(scheduleData, null, 2)}</pre>
             </div>
