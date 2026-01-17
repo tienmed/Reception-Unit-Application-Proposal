@@ -95,8 +95,8 @@ export default function SchedulesPage() {
         };
     });
 
-    const isLoading = isLoadingSchedules || isLoadingClinics;
-    const clinics = clinicsData?.data || [];
+    // const isLoading = isLoadingSchedules || isLoadingClinics; // REMOVED
+    // const clinics = clinicsData?.data || []; // REMOVED
 
     const getClinicSchedules = (clinicId: number, date: Date, slot: 'morning' | 'afternoon') => {
         const dayIndex = date.getDay();
@@ -143,13 +143,14 @@ export default function SchedulesPage() {
 
             {/* DEBUG: Dump Data to verify structure */}
             <div className="bg-slate-100 p-4 rounded text-xs font-mono max-h-40 overflow-auto border border-red-500 mb-2">
-                <p className="font-bold text-red-500">DEBUG DATA DUMP (Schedules):</p>
+                <p className="font-bold text-red-500">DEBUG DATA DUMP (Schedules BFF):</p>
                 <p>IsLoading: {isLoading ? 'true' : 'false'}</p>
-                <p className="text-red-500 font-bold">IsError: {isScheduleError ? 'YES' : 'No'}</p>
+                <p className="text-red-500 font-bold">IsError: {isBffError ? 'YES' : 'No'}</p>
                 {/* @ts-ignore */}
-                <p>Error Msg: {scheduleError?.message || JSON.stringify(scheduleError)}</p>
-                <p>Schedules Data Type: {typeof scheduleData}</p>
-                <pre>{JSON.stringify(scheduleData, null, 2)}</pre>
+                <p>Error Msg: {bffError?.message || JSON.stringify(bffError)}</p>
+                <p>Clinics Count: {clinics.length}</p>
+                <p>Schedules Count: {rawSchedules.length}</p>
+                {/* <pre>{JSON.stringify(mergedData, null, 2)}</pre> */}
             </div>
 
             {/* Main Table Container - Flex Grow to fill space */}
