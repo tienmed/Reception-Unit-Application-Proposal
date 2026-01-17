@@ -36,7 +36,12 @@ async function proxyRequest(request: NextRequest, path: string[]) {
         }
     });
 
-    console.log(`[PROXY] Headers:`, JSON.stringify(headers));
+    // console.log(`[PROXY] Headers:`, JSON.stringify(headers));
+    const authHeader = request.headers.get('authorization');
+    if (authHeader) {
+        // console.log(`[PROXY] Explicit Authorization found: ${authHeader.substring(0, 20)}...`);
+        headers['Authorization'] = authHeader;
+    }
 
     try {
         const body = ['POST', 'PUT'].includes(request.method) ? await request.text() : undefined;
