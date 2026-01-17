@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { scheduleService } from '@/services/schedule.service';
 import { clinicService } from '@/services/clinic.service';
@@ -9,6 +9,7 @@ import { vi } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Loader2, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Schedule } from '@/types';
 
 // Helper to get color for clinic
 const getClinicColor = (id?: number) => {
@@ -33,16 +34,22 @@ export default function SchedulesPage() {
     // Start week on Sunday (0)
     const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
     const weekStartStr = format(weekStart, 'yyyy-MM-dd');
+    const weekEnd = addDays(weekStart, 6);
+    const weekEndStr = format(weekEnd, 'yyyy-MM-dd');
 
-    // Fetch Schedules
+    // Fetch Schedules (Standard List API with Date Range)
     const {
         data: scheduleData,
         isLoading: isLoadingSchedules,
         error: scheduleError,
         isError: isScheduleError
     } = useQuery({
-        queryKey: ['schedules', 'weekly', weekStartStr],
-        queryFn: () => scheduleService.getWeeklySchedules(weekStartStr),
+        queryKey: ['schedules', 'list', weekStartStr, weekEndStr], // Unique key for valid caching
+        queryFn: () => scheduleService.getSchedules({
+            from_date: weekStartStr,
+            to_date: weekEndStr,
+            per_page: 1000 // Ensure we get enough records for the week
+        }),
     });
 
     // Fetch Clinics
@@ -50,6 +57,19 @@ export default function SchedulesPage() {
         queryKey: ['clinics'],
         queryFn: () => clinicService.getClinics({ is_active: true }),
     });
+
+    // Client-side grouping of schedules
+    const groupedSchedules = useMemo(() => {
+        const rawList = scheduleData?.data || [];
+        return rawList.reduce((acc, schedule) => {
+            // Create key: "dayIndex_timeSlot" (e.g., "1_morning")
+            // Use day_of_week from API which should be 0-6 (Sun-Sat)
+            const key = `${schedule.day_of_week}_${schedule.time_slot}`;
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(schedule);
+            return acc;
+        }, {} as Record<string, Schedule[]>);
+    }, [scheduleData]);
 
     const handlePrevWeek = () => setCurrentDate(subWeeks(currentDate, 1));
     const handleNextWeek = () => setCurrentDate(addWeeks(currentDate, 1));
@@ -73,7 +93,7 @@ export default function SchedulesPage() {
     const getClinicSchedules = (clinicId: number, date: Date, slot: 'morning' | 'afternoon') => {
         const dayIndex = date.getDay();
         const key = `${dayIndex}_${slot}`;
-        const allSchedulesForSlot = (scheduleData?.data?.schedules as Record<string, any[]> | undefined)?.[key] || [];
+        const allSchedulesForSlot = groupedSchedules[key] || [];
         // Filter for clinic and take only the FIRST one as per requirement "1 phòng khám chỉ có duy nhất 1 người"
         return allSchedulesForSlot.find(s => s.clinic_id === clinicId);
     };
