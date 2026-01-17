@@ -107,101 +107,101 @@ export default function SchedulesPage() {
                     )}
                 </div>
             </div>
-        </div>
 
-            {/* DEBUG: Dump Data to verify structure */ }
-    <div className="bg-slate-100 p-4 rounded text-xs font-mono max-h-40 overflow-auto border border-red-500 mb-2">
-        <p className="font-bold text-red-500">DEBUG DATA DUMP (Schedules):</p>
-        <p>IsLoading: {isLoading ? 'true' : 'false'}</p>
-        <p>Schedules Data Type: {typeof scheduleData}</p>
-        <pre>{JSON.stringify(scheduleData, null, 2)}</pre>
-    </div>
 
-    {/* Main Table Container - Flex Grow to fill space */ }
-    <div className="flex-1 border rounded-md bg-white shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-auto flex-1">
-            <table className="w-full h-full table-fixed border-collapse">
-                <thead>
-                    <tr className="bg-muted/90 sticky top-0 z-20 shadow-sm">
-                        <th className="border p-2 w-[15%] text-left font-bold text-muted-foreground uppercase text-[10px] md:text-xs">
-                            Phòng khám
-                        </th>
-                        {weekDays.map((day) => (
-                            <th
-                                key={day.date.toISOString()}
-                                className={cn(
-                                    "border p-2 text-center font-bold capitalize text-[10px] md:text-xs",
-                                    day.isWeekend ? "bg-orange-100 text-orange-900" : "text-slate-700"
-                                )}
-                            >
-                                <div>{day.label}</div>
-                                <div className="font-normal opacity-70 text-[9px] md:text-[10px]">{day.subLabel}</div>
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {clinics.map((clinic) => {
-                        const clinicColorClass = getClinicColor(clinic.id);
-                        return (
-                            <tr key={clinic.id} className="h-20"> {/* Minimum height for rows */}
-                                <td className="border p-2 font-semibold text-xs md:text-sm bg-white sticky left-0 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] truncate">
-                                    {clinic.name}
-                                </td>
-                                {weekDays.map((day) => {
-                                    const morningSchedule = getClinicSchedules(clinic.id, day.date, 'morning');
-                                    const afternoonSchedule = getClinicSchedules(clinic.id, day.date, 'afternoon');
+            {/* DEBUG: Dump Data to verify structure */}
+            <div className="bg-slate-100 p-4 rounded text-xs font-mono max-h-40 overflow-auto border border-red-500 mb-2">
+                <p className="font-bold text-red-500">DEBUG DATA DUMP (Schedules):</p>
+                <p>IsLoading: {isLoading ? 'true' : 'false'}</p>
+                <p>Schedules Data Type: {typeof scheduleData}</p>
+                <pre>{JSON.stringify(scheduleData, null, 2)}</pre>
+            </div>
 
-                                    const hasMorning = !!morningSchedule;
-                                    const hasAfternoon = !!afternoonSchedule;
-
-                                    return (
-                                        <td
-                                            key={day.date.toISOString()}
-                                            className={cn(
-                                                "border p-0 align-top transition-colors text-[10px] md:text-xs",
-                                                day.isWeekend && !hasMorning && !hasAfternoon ? "bg-orange-50/20" : ""
-                                            )}
-                                        >
-                                            <div className="flex flex-col h-full min-h-[5rem]">
-                                                {/* Morning */}
-                                                <div className={cn(
-                                                    "flex-1 p-1 flex items-center justify-center text-center border-b",
-                                                    hasMorning ? clinicColorClass : "bg-gray-100/50 text-gray-400"
-                                                )}>
-                                                    {hasMorning ? (
-                                                        <span className="font-bold line-clamp-2 leading-tight">
-                                                            {morningSchedule.user?.name}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="italic opacity-50 text-[9px]"></span> // Empty space instead of "(Trống)" to save space/cleaner
-                                                    )}
-                                                </div>
-
-                                                {/* Afternoon */}
-                                                <div className={cn(
-                                                    "flex-1 p-1 flex items-center justify-center text-center",
-                                                    hasAfternoon ? clinicColorClass : "bg-gray-100/50 text-gray-400"
-                                                )}>
-                                                    {hasAfternoon ? (
-                                                        <span className="font-bold line-clamp-2 leading-tight">
-                                                            {afternoonSchedule.user?.name}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="italic opacity-50 text-[9px]"></span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </td>
-                                    );
-                                })}
+            {/* Main Table Container - Flex Grow to fill space */}
+            <div className="flex-1 border rounded-md bg-white shadow-sm overflow-hidden flex flex-col">
+                <div className="overflow-auto flex-1">
+                    <table className="w-full h-full table-fixed border-collapse">
+                        <thead>
+                            <tr className="bg-muted/90 sticky top-0 z-20 shadow-sm">
+                                <th className="border p-2 w-[15%] text-left font-bold text-muted-foreground uppercase text-[10px] md:text-xs">
+                                    Phòng khám
+                                </th>
+                                {weekDays.map((day) => (
+                                    <th
+                                        key={day.date.toISOString()}
+                                        className={cn(
+                                            "border p-2 text-center font-bold capitalize text-[10px] md:text-xs",
+                                            day.isWeekend ? "bg-orange-100 text-orange-900" : "text-slate-700"
+                                        )}
+                                    >
+                                        <div>{day.label}</div>
+                                        <div className="font-normal opacity-70 text-[9px] md:text-[10px]">{day.subLabel}</div>
+                                    </th>
+                                ))}
                             </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
-        </div>
-    </div>
+                        </thead>
+                        <tbody>
+                            {clinics.map((clinic) => {
+                                const clinicColorClass = getClinicColor(clinic.id);
+                                return (
+                                    <tr key={clinic.id} className="h-20"> {/* Minimum height for rows */}
+                                        <td className="border p-2 font-semibold text-xs md:text-sm bg-white sticky left-0 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] truncate">
+                                            {clinic.name}
+                                        </td>
+                                        {weekDays.map((day) => {
+                                            const morningSchedule = getClinicSchedules(clinic.id, day.date, 'morning');
+                                            const afternoonSchedule = getClinicSchedules(clinic.id, day.date, 'afternoon');
+
+                                            const hasMorning = !!morningSchedule;
+                                            const hasAfternoon = !!afternoonSchedule;
+
+                                            return (
+                                                <td
+                                                    key={day.date.toISOString()}
+                                                    className={cn(
+                                                        "border p-0 align-top transition-colors text-[10px] md:text-xs",
+                                                        day.isWeekend && !hasMorning && !hasAfternoon ? "bg-orange-50/20" : ""
+                                                    )}
+                                                >
+                                                    <div className="flex flex-col h-full min-h-[5rem]">
+                                                        {/* Morning */}
+                                                        <div className={cn(
+                                                            "flex-1 p-1 flex items-center justify-center text-center border-b",
+                                                            hasMorning ? clinicColorClass : "bg-gray-100/50 text-gray-400"
+                                                        )}>
+                                                            {hasMorning ? (
+                                                                <span className="font-bold line-clamp-2 leading-tight">
+                                                                    {morningSchedule.user?.name}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="italic opacity-50 text-[9px]"></span> // Empty space instead of "(Trống)" to save space/cleaner
+                                                            )}
+                                                        </div>
+
+                                                        {/* Afternoon */}
+                                                        <div className={cn(
+                                                            "flex-1 p-1 flex items-center justify-center text-center",
+                                                            hasAfternoon ? clinicColorClass : "bg-gray-100/50 text-gray-400"
+                                                        )}>
+                                                            {hasAfternoon ? (
+                                                                <span className="font-bold line-clamp-2 leading-tight">
+                                                                    {afternoonSchedule.user?.name}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="italic opacity-50 text-[9px]"></span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            );
+                                        })}
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div >
     );
 }
