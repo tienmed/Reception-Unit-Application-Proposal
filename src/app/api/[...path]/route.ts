@@ -58,6 +58,13 @@ async function proxyRequest(request: NextRequest, path: string[]) {
     if (authHeader) {
         // console.log(`[PROXY] Explicit Authorization found: ${authHeader.substring(0, 20)}...`);
         headers['Authorization'] = authHeader;
+    } else {
+        // Fallback: Inject token from server-side environment variable if client didn't send it
+        const envToken = process.env.NEXT_PUBLIC_API_TOKEN;
+        if (envToken) {
+            headers['Authorization'] = `Bearer ${envToken}`;
+            // console.log(`[PROXY] Injected token from env`);
+        }
     }
 
     try {
