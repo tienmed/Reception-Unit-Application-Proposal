@@ -40,8 +40,15 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('api_token');
-        window.location.href = '/login';
+        const envToken = process.env.NEXT_PUBLIC_API_TOKEN;
+        // Only redirect to login if we don't have a hardcoded env token.
+        // If we have an env token and getting 401, redirecting to login will just loop.
+        if (!envToken) {
+          localStorage.removeItem('api_token');
+          window.location.href = '/login';
+        } else {
+          console.error('API Error 401 with Env Token. Check token validity or Proxy.');
+        }
       }
     }
     return Promise.reject(error);
