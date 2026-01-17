@@ -69,12 +69,18 @@ async function proxyRequest(request: NextRequest, path: string[]) {
     try {
         const body = ['POST', 'PUT'].includes(request.method) ? await request.text() : undefined;
 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 9000); // 9 second timeout (Vercel limit is 10s)
+
         const response = await fetch(url, {
             method: request.method,
             headers: headers,
             body: body,
-            redirect: 'manual'
+            redirect: 'manual',
+            signal: controller.signal
         });
+
+        clearTimeout(timeoutId);
 
         const responseBody = await response.text();
 
