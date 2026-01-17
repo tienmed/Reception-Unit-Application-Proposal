@@ -31,7 +31,8 @@ async function proxyRequest(request: NextRequest, path: string[]) {
     const headers: Record<string, string> = {};
     request.headers.forEach((value, key) => {
         // Pass important headers, skip host/connection specific ones
-        if (!['host', 'connection', 'content-length'].includes(key)) {
+        // Also skip authorization here to avoid duplication (we handle it explicitly below)
+        if (!['host', 'connection', 'content-length', 'authorization'].includes(key)) {
             headers[key] = value;
         }
     });
