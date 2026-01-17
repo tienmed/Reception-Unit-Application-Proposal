@@ -84,6 +84,13 @@ async function proxyRequest(request: NextRequest, path: string[]) {
             responseHeaders.set(key, value);
         });
 
+        // OPTIMIZATION: Add Cache-Control for GET requests to mitigate slow upstream response.
+        // Vercel will cache this for 60s (s-maxage) and serve stale data for 5 mins (stale-while-revalidate)
+        // while fetching fresh data in the background. This hides the 10s+ latency from users.
+        if (request.method === 'GET' && response.status === 200) {
+            responseHeaders.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+        }
+
         return new NextResponse(responseBody, {
             status: response.status,
             headers: responseHeaders
