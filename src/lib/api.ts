@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://phongkhamdaihocypnt.edu.vn/nhansu/api';
+const API_URL = '/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -14,7 +14,7 @@ api.interceptors.request.use(
   (config) => {
     // Check for token in localStorage (client-side) or environment variable (fallback)
     let token: string | null = null;
-    
+
     if (typeof window !== 'undefined') {
       token = localStorage.getItem('api_token');
     }
@@ -27,7 +27,7 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     return config;
   },
   (error) => {
