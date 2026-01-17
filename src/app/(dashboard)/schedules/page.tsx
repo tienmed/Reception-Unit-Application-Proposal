@@ -37,47 +37,29 @@ export default function SchedulesPage() {
     const weekEnd = addDays(weekStart, 6);
     const weekEndStr = format(weekEnd, 'yyyy-MM-dd');
 
-    // Fetch Schedules (Standard List API with Date Range)
+    // Fetch Merged Weekly Data (BFF)
     const {
-        data: scheduleData,
-        isLoading: isLoadingSchedules,
-        error: scheduleError,
-        isError: isScheduleError
+        data: mergedData,
+        isLoading,
+        error: bffError,
+        isError: isBffError
     } = useQuery({
-        queryKey: ['schedules', 'list', weekStartStr, weekEndStr], // Unique key for valid caching
-        queryFn: () => scheduleService.getSchedules({
-            from_date: weekStartStr,
-            to_date: weekEndStr,
-            per_page: 1000 // Ensure we get enough records for the week
-        }),
+        queryKey: ['schedules', 'bff-weekly', weekStartStr],
+        queryFn: () => scheduleService.getMergedWeeklySchedule(weekStartStr, weekEndStr),
     });
 
-    // Fetch Clinics
-    const { data: clinicsData, isLoading: isLoadingClinics } = useQuery({
-        queryKey: ['clinics'],
-        queryFn: async () => {
-            const res = await clinicService.getClinics({ is_active: true, per_page: 100 });
-            // Filter client-side for "Phòng khám" (exclude Admin/Functional)
-            // IDs: 2, 3, 5, 6 seem to be clinical. 1 is Admin, 7 is Functional.
-            if (res.data) {
-                res.data = res.data.filter(c => [2, 3, 5, 6].includes(c.category_id || 0));
-            }
-            return res;
-        }
-    });
+    const clinics = mergedData?.data?.clinics || [];
+    const rawSchedules = mergedData?.data?.schedules || [];
 
     // Client-side grouping of schedules
     const groupedSchedules = useMemo(() => {
-        const rawList = scheduleData?.data || [];
-        return rawList.reduce((acc, schedule) => {
-            // Create key: "dayIndex_timeSlot" (e.g., "1_morning")
-            // Use day_of_week from API which should be 0-6 (Sun-Sat)
+        return rawSchedules.reduce((acc, schedule) => {
             const key = `${schedule.day_of_week}_${schedule.time_slot}`;
             if (!acc[key]) acc[key] = [];
             acc[key].push(schedule);
             return acc;
         }, {} as Record<string, Schedule[]>);
-    }, [scheduleData]);
+    }, [rawSchedules]);
 
     const handlePrevWeek = () => setCurrentDate(subWeeks(currentDate, 1));
     const handleNextWeek = () => setCurrentDate(addWeeks(currentDate, 1));
@@ -94,9 +76,6 @@ export default function SchedulesPage() {
             isWeekend: isSaturday(d),
         };
     });
-
-    // const isLoading = isLoadingSchedules || isLoadingClinics; // REMOVED
-    // const clinics = clinicsData?.data || []; // REMOVED
 
     const getClinicSchedules = (clinicId: number, date: Date, slot: 'morning' | 'afternoon') => {
         const dayIndex = date.getDay();
