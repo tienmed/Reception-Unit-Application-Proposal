@@ -98,21 +98,7 @@ export async function GET(request: NextRequest) {
         });
     }
 
-    // 4. Construct lightweight view
-    const rows = filteredClinics.map(clinic => {
-        return {
-            id: clinic.id,
-            name: clinic.name,
-            location: clinic.location, // Useful for UI
-            schedules: {
-                // Pre-calculate slots for days 0-6 (Sun-Sat) or 1-7 (Mon-Sun)?
-                // API day_of_week seems to be 0=Sun, 1=Mon... wait, logic in Step 422 used `addDays(weekStart, i+1)` for Mon-Sat.
-                // Let's just return the map/array of schedules valid for this clinic
-                // and let Frontend verify day matches.
-                // Or better: Return key-value for easy lookup.
-            }
-        };
-    });
+
 
     // Actually, passing the schedules list (filtered) is safer than pre-grid construction 
     // because Frontend Date logic is complex (Locales).

@@ -72,7 +72,13 @@ export const scheduleService = {
 
     getMergedWeeklySchedule: async (weekStart: string, weekEnd: string) => {
         if (isMockMode()) {
-            return scheduleService.getWeeklySchedules(weekStart);
+            return {
+                success: true,
+                data: {
+                    clinics: [],
+                    schedules: mockSchedules
+                }
+            };
         }
         const response = await api.get<{
             success: boolean;
