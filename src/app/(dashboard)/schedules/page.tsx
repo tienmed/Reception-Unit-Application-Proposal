@@ -113,6 +113,8 @@ export default function SchedulesPage() {
             <div className="bg-slate-100 p-4 rounded text-xs font-mono max-h-40 overflow-auto border border-red-500 mb-2">
                 <p className="font-bold text-red-500">DEBUG DATA DUMP (Schedules):</p>
                 <p>IsLoading: {isLoading ? 'true' : 'false'}</p>
+                <p className="text-red-500 font-bold">IsError: {isLoadingSchedules || isLoadingClinics ? '...' : (scheduleData === undefined ? 'Likely Error' : 'No')}</p>
+                <p>Error Details: {JSON.stringify((scheduleData as any)?.error || 'No explicit error obj', null, 2)}</p>
                 <p>Schedules Data Type: {typeof scheduleData}</p>
                 <pre>{JSON.stringify(scheduleData, null, 2)}</pre>
             </div>
