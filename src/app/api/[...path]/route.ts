@@ -53,25 +53,16 @@ async function proxyRequest(request: NextRequest, path: string[]) {
     // Explicitly set Host header
     headers['Host'] = API_HOSTNAME;
 
-    // console.log(`[PROXY] Headers:`, JSON.stringify(headers));
-    // Debug Env Token presence
-    const envToken = process.env.NEXT_PUBLIC_API_TOKEN;
-    console.log(`[PROXY] Env Token Present: ${!!envToken}, Length: ${envToken?.length || 0}`);
-
     // FORCE OVERRIDE: Always use the Server-Side Environment Token if available.
-    // This fixes issues where the Client (Browser) might send an old/cached/invalid token or 
-    // where the Client build didn't pick up the new Env Var.
+    // This fixes issues where the Client (Browser) might send an old/cached/invalid token.
+    const envToken = process.env.NEXT_PUBLIC_API_TOKEN;
     if (envToken) {
         headers['Authorization'] = `Bearer ${envToken}`;
-        console.log(`[PROXY] Force-Injected token from env: Bearer ${envToken.substring(0, 10)}...`);
     } else {
-        // Only verify client header if we don't have a server token (Fallback)
+        // Fallback to client header
         const authHeader = request.headers.get('authorization');
         if (authHeader) {
             headers['Authorization'] = authHeader;
-            console.log(`[PROXY] Using Client Authorization header`);
-        } else {
-            console.warn('[PROXY] No Token found in Request or Env!');
         }
     }
 
@@ -85,12 +76,7 @@ async function proxyRequest(request: NextRequest, path: string[]) {
             redirect: 'manual'
         });
 
-        console.log(`[PROXY] Upstream Status: ${response.status}`);
-
         const responseBody = await response.text();
-        if (response.status !== 200) {
-            console.log(`[PROXY] Upstream Error Body: ${responseBody}`);
-        }
 
         // Create new headers to pass back
         const responseHeaders = new Headers();
