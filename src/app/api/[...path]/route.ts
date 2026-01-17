@@ -30,9 +30,8 @@ async function proxyRequest(request: NextRequest, path: string[]) {
 
     const headers: Record<string, string> = {};
     request.headers.forEach((value, key) => {
-        // Pass important headers, skip host/connection specific ones
-        // Also skip authorization here to avoid duplication (we handle it explicitly below)
-        if (!['host', 'connection', 'content-length', 'authorization'].includes(key)) {
+        // Only pass specific safe headers to avoid upstream issues
+        if (['accept', 'content-type', 'user-agent'].includes(key.toLowerCase())) {
             headers[key] = value;
         }
     });
@@ -73,6 +72,7 @@ async function proxyRequest(request: NextRequest, path: string[]) {
 
     } catch (error: any) {
         console.error('[PROXY] Error:', error);
-        return NextResponse.json({ success: false, message: 'Proxy Error', error: error.message }, { status: 500 });
+        if (error.cause) console.error('[PROXY] Error Cause:', error.cause);
+        return NextResponse.json({ success: false, message: 'Proxy Error', error: error.message, details: error.cause }, { status: 500 });
     }
 }
