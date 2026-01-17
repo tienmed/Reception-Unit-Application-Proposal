@@ -54,16 +54,19 @@ async function proxyRequest(request: NextRequest, path: string[]) {
     headers['Host'] = API_HOSTNAME;
 
     // console.log(`[PROXY] Headers:`, JSON.stringify(headers));
+    // Debug Env Token presence
+    const envToken = process.env.NEXT_PUBLIC_API_TOKEN;
+    console.log(`[PROXY] Env Token Present: ${!!envToken}, Length: ${envToken?.length || 0}`);
+
     const authHeader = request.headers.get('authorization');
     if (authHeader) {
-        // console.log(`[PROXY] Explicit Authorization found: ${authHeader.substring(0, 20)}...`);
         headers['Authorization'] = authHeader;
     } else {
-        // Fallback: Inject token from server-side environment variable if client didn't send it
-        const envToken = process.env.NEXT_PUBLIC_API_TOKEN;
         if (envToken) {
             headers['Authorization'] = `Bearer ${envToken}`;
-            // console.log(`[PROXY] Injected token from env`);
+            console.log(`[PROXY] Injected token from env: Bearer ${envToken.substring(0, 10)}...`);
+        } else {
+            console.warn('[PROXY] No Token found in Request or Env!');
         }
     }
 
@@ -74,14 +77,15 @@ async function proxyRequest(request: NextRequest, path: string[]) {
             method: request.method,
             headers: headers,
             body: body,
-            // Disable auto-redirect following to trace 302s if any
             redirect: 'manual'
         });
 
         console.log(`[PROXY] Upstream Status: ${response.status}`);
 
         const responseBody = await response.text();
-        // console.log(`[PROXY] Upstream Body Preview: ${responseBody.substring(0, 200)}`);
+        if (response.status !== 200) {
+            console.log(`[PROXY] Upstream Error Body: ${responseBody}`);
+        }
 
         // Create new headers to pass back
         const responseHeaders = new Headers();
